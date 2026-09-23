@@ -1,12 +1,124 @@
+const emailInput = document.getElementById("emailInput");
+const passwordInput = document.getElementById("passwordInput");
+const loginButton = document.getElementById("loginButton");
+const registerButton = document.getElementById("registerButton");
+const logoutButton = document.getElementById("logoutButton");
+const authMessage = document.getElementById("authMessage");
+const authSection = document.getElementById("authSection");
+const todoSection = document.getElementById("todoSection");
+const userEmail = document.getElementById("userEmail");
+
 const todoInput = document.getElementById("todoInput");
 const addButton = document.getElementById("addButton");
 const todoList = document.getElementById("todoList");
 
-async function loadTodos() {
-  const response = await fetch("/api/todos");
-  const todos = await response.json();
+function showAuthMessage(message) {
+  authMessage.textContent = message;
+}
 
-  renderTodos(todos);
+function showLoggedOut() {
+  authSection.classList.remove("hidden");
+  todoSection.classList.add("hidden");
+  userEmail.textContent = "";
+  todoList.innerHTML = "";
+}
+
+function showLoggedIn(user) {
+  authSection.classList.add("hidden");
+  todoSection.classList.remove("hidden");
+  userEmail.textContent = user.email;
+  showAuthMessage("");
+}
+
+async function requestJson(url, options = {}) {
+  const response = await fetch(url, options);
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.message || "요청 처리 중 오류가 발생했습니다.");
+  }
+
+  return data;
+}
+
+async function checkAuth() {
+  const data = await requestJson("/api/auth/me");
+
+  if (!data.user) {
+    showLoggedOut();
+    return;
+  }
+
+  showLoggedIn(data.user);
+  await loadTodos();
+}
+
+async function register() {
+  try {
+    const data = await requestJson("/api/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email: emailInput.value.trim(),
+        password: passwordInput.value
+      })
+    });
+
+    passwordInput.value = "";
+    showLoggedIn(data.user);
+    await loadTodos();
+  } catch (error) {
+    showAuthMessage(error.message);
+  }
+}
+
+async function login() {
+  try {
+    const data = await requestJson("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email: emailInput.value.trim(),
+        password: passwordInput.value
+      })
+    });
+
+    passwordInput.value = "";
+    showLoggedIn(data.user);
+    await loadTodos();
+  } catch (error) {
+    showAuthMessage(error.message);
+  }
+}
+
+async function logout() {
+  try {
+    await requestJson("/api/auth/logout", {
+      method: "POST"
+    });
+
+    showLoggedOut();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function loadTodos() {
+  try {
+    const todos = await requestJson("/api/todos");
+    renderTodos(todos);
+  } catch (error) {
+    if (error.message === "로그인이 필요합니다.") {
+      showLoggedOut();
+      return;
+    }
+
+    alert(error.message);
+  }
 }
 
 function renderTodos(todos) {
@@ -27,17 +139,21 @@ function renderTodos(todos) {
     }
 
     checkbox.addEventListener("change", async () => {
-      await fetch(`/api/todos/${todo.id}/completed`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          completed: checkbox.checked
-        })
-      });
+      try {
+        await requestJson(`/api/todos/${todo.id}/completed`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            completed: checkbox.checked
+          })
+        });
 
-      loadTodos();
+        await loadTodos();
+      } catch (error) {
+        alert(error.message);
+      }
     });
 
     const editButton = document.createElement("button");
@@ -56,32 +172,36 @@ function renderTodos(todos) {
         return;
       }
 
-      const response = await fetch(`/api/todos/${todo.id}/text`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          text
-        })
-      });
+      try {
+        await requestJson(`/api/todos/${todo.id}/text`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            text
+          })
+        });
 
-      if (!response.ok) {
-        return;
+        await loadTodos();
+      } catch (error) {
+        alert(error.message);
       }
-
-      loadTodos();
     });
 
     const deleteButton = document.createElement("button");
     deleteButton.textContent = "삭제";
 
     deleteButton.addEventListener("click", async () => {
-      await fetch(`/api/todos/${todo.id}`, {
-        method: "DELETE"
-      });
+      try {
+        await requestJson(`/api/todos/${todo.id}`, {
+          method: "DELETE"
+        });
 
-      loadTodos();
+        await loadTodos();
+      } catch (error) {
+        alert(error.message);
+      }
     });
 
     li.appendChild(checkbox);
@@ -100,24 +220,42 @@ async function addTodo() {
     return;
   }
 
-  const response = await fetch("/api/todos", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      text: text
-    })
-  });
+  try {
+    await requestJson("/api/todos", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        text
+      })
+    });
 
-  if (!response.ok) {
-    return;
+    todoInput.value = "";
+    await loadTodos();
+  } catch (error) {
+    alert(error.message);
   }
-
-  todoInput.value = "";
-  loadTodos();
 }
 
+loginButton.addEventListener("click", login);
+registerButton.addEventListener("click", register);
+logoutButton.addEventListener("click", logout);
 addButton.addEventListener("click", addTodo);
 
-loadTodos();
+passwordInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    login();
+  }
+});
+
+todoInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    addTodo();
+  }
+});
+
+checkAuth().catch((error) => {
+  console.error(error);
+  showLoggedOut();
+});
