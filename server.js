@@ -51,14 +51,34 @@ app.use(session({
 
 app.use(express.static(path.join(__dirname, "public")));
 
-// DB 연결 확인
-pool.query("SELECT NOW()")
-  .then(() => {
-    console.log("PostgreSQL 연결 성공");
-  })
-  .catch((error) => {
-    console.error("PostgreSQL 연결 실패:", error.message);
-  });
+async function initializeDatabase() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS todos (
+      id SERIAL PRIMARY KEY,
+      text TEXT NOT NULL,
+      completed BOOLEAN NOT NULL DEFAULT FALSE,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    ALTER TABLE todos
+    ADD COLUMN IF NOT EXISTS completed BOOLEAN NOT NULL DEFAULT FALSE;
+
+    ALTER TABLE todos
+    ADD COLUMN IF NOT EXISTS user_id INTEGER;
+
+    CREATE INDEX IF NOT EXISTS idx_todos_user_id
+    ON todos(user_id);
+  `);
+
+  console.log("PostgreSQL 연결 및 테이블 준비 성공");
+}
 
 async function requireAuth(req, res, next) {
   if (!req.session.userId) {
@@ -567,6 +587,13 @@ app.delete("/api/todos/:id", requireAuth, async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`서버 실행 중: http://localhost:${PORT}`);
-});
+initializeDatabase()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`서버 실행 중: http://localhost:${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error("서버 시작 실패:", error);
+    process.exit(1);
+  });
