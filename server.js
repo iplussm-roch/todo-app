@@ -104,6 +104,39 @@ app.patch("/api/todos/:id/completed", async (req, res) => {
   }
 });
 
+// 할 일 내용 수정
+app.patch("/api/todos/:id/text", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const text = req.body.text?.trim();
+
+    if (!text) {
+      return res.status(400).json({
+        message: "수정할 내용을 입력해주세요."
+      });
+    }
+
+    const result = await pool.query(
+      "UPDATE todos SET text = $1 WHERE id = $2 RETURNING id, text, completed",
+      [text, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        message: "할 일을 찾을 수 없습니다."
+      });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "할 일 수정 실패"
+    });
+  }
+});
+
 // 할 일 삭제
 app.delete("/api/todos/:id", async (req, res) => {
   try {
