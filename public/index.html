@@ -3,35 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>나의 할 일</title>
-
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-
   <div class="container">
-
     <h1>나의 할 일</h1>
 
-    <div class="input-area">
-      <input
-        id="todoInput"
-        type="text"
-        placeholder="할 일을 입력하세요"
-      >
+    <section id="authSection">
+      <div class="auth-form">
+        <input id="emailInput" type="email" placeholder="이메일">
+        <input id="passwordInput" type="password" placeholder="비밀번호 (8자 이상)">
+        <div class="auth-buttons">
+          <button id="loginButton">로그인</button>
+          <button id="registerButton">회원가입</button>
+        </div>
+        <p id="authMessage"></p>
+      </div>
+    </section>
 
-      <button id="addButton">
-        추가
-      </button>
-    </div>
+    <section id="todoSection" class="hidden">
+      <div class="user-bar">
+        <span id="userEmail"></span>
+        <button id="logoutButton">로그아웃</button>
+      </div>
 
-    <ul id="todoList"></ul>
+      <div class="input-area">
+        <input id="todoInput" type="text" placeholder="할 일을 입력하세요">
+        <button id="addButton">추가</button>
+      </div>
 
+      <ul id="todoList"></ul>
+    </section>
   </div>
 
   <script src="app.js"></script>
-
 </body>
 </html>
