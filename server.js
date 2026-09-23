@@ -8,7 +8,7 @@ const session = require("express-session");
 const PgSession = require("connect-pg-simple")(session);
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 const sessionSecret = process.env.SESSION_SECRET;
 
@@ -17,13 +17,17 @@ if (!sessionSecret) {
 }
 
 // PostgreSQL 연결
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: Number(process.env.PGPORT),
-});
+const pool = process.env.DATABASE_URL
+  ? new Pool({
+      connectionString: process.env.DATABASE_URL,
+    })
+  : new Pool({
+      user: process.env.PGUSER,
+      host: process.env.PGHOST,
+      database: process.env.PGDATABASE,
+      password: process.env.PGPASSWORD,
+      port: Number(process.env.PGPORT),
+    });
 
 app.set("trust proxy", 1);
 app.use(express.json());
