@@ -15,7 +15,30 @@ function renderTodos(todos) {
   todos.forEach((todo) => {
     const li = document.createElement("li");
 
-    li.textContent = todo.text;
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = todo.completed;
+
+    const textSpan = document.createElement("span");
+    textSpan.textContent = todo.text;
+
+    if (todo.completed) {
+      textSpan.classList.add("completed");
+    }
+
+    checkbox.addEventListener("change", async () => {
+      await fetch(`/api/todos/${todo.id}/completed`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          completed: checkbox.checked
+        })
+      });
+
+      loadTodos();
+    });
 
     const deleteButton = document.createElement("button");
     deleteButton.textContent = "삭제";
@@ -28,7 +51,10 @@ function renderTodos(todos) {
       loadTodos();
     });
 
+    li.appendChild(checkbox);
+    li.appendChild(textSpan);
     li.appendChild(deleteButton);
+
     todoList.appendChild(li);
   });
 }
@@ -42,11 +68,9 @@ async function addTodo() {
 
   const response = await fetch("/api/todos", {
     method: "POST",
-
     headers: {
       "Content-Type": "application/json"
     },
-
     body: JSON.stringify({
       text: text
     })
@@ -57,7 +81,6 @@ async function addTodo() {
   }
 
   todoInput.value = "";
-
   loadTodos();
 }
 

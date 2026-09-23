@@ -28,4 +28,20 @@ button {
 
 li {
   margin-top: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+li input[type="checkbox"] {
+  flex: 0 0 auto;
+}
+
+li span {
+  flex: 1;
+}
+
+.completed {
+  text-decoration: line-through;
+  opacity: 0.5;
 }
