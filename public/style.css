@@ -22,13 +22,23 @@ body {
   gap: 10px;
 }
 
-.auth-buttons {
+.auth-buttons,
+.account-actions {
   display: flex;
   gap: 10px;
 }
 
-.auth-buttons button {
+.auth-buttons button,
+.account-actions button {
   flex: 1;
+}
+
+.account-actions {
+  margin-bottom: 20px;
+}
+
+#deleteAccountButton {
+  border: 1px solid #999;
 }
 
 #authMessage {
@@ -41,7 +51,7 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .input-area {
