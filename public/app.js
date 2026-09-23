@@ -40,6 +40,39 @@ function renderTodos(todos) {
       loadTodos();
     });
 
+    const editButton = document.createElement("button");
+    editButton.textContent = "수정";
+
+    editButton.addEventListener("click", async () => {
+      const newText = prompt("수정할 내용을 입력하세요.", todo.text);
+
+      if (newText === null) {
+        return;
+      }
+
+      const text = newText.trim();
+
+      if (text === "") {
+        return;
+      }
+
+      const response = await fetch(`/api/todos/${todo.id}/text`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          text
+        })
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      loadTodos();
+    });
+
     const deleteButton = document.createElement("button");
     deleteButton.textContent = "삭제";
 
@@ -53,6 +86,7 @@ function renderTodos(todos) {
 
     li.appendChild(checkbox);
     li.appendChild(textSpan);
+    li.appendChild(editButton);
     li.appendChild(deleteButton);
 
     todoList.appendChild(li);
