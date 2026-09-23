@@ -3,6 +3,8 @@ const passwordInput = document.getElementById("passwordInput");
 const loginButton = document.getElementById("loginButton");
 const registerButton = document.getElementById("registerButton");
 const logoutButton = document.getElementById("logoutButton");
+const changePasswordButton = document.getElementById("changePasswordButton");
+const deleteAccountButton = document.getElementById("deleteAccountButton");
 const authMessage = document.getElementById("authMessage");
 const authSection = document.getElementById("authSection");
 const todoSection = document.getElementById("todoSection");
@@ -101,6 +103,83 @@ async function logout() {
       method: "POST"
     });
 
+    showLoggedOut();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function changePassword() {
+  const currentPassword = prompt("현재 비밀번호를 입력하세요.");
+
+  if (currentPassword === null) {
+    return;
+  }
+
+  const newPassword = prompt("새 비밀번호를 입력하세요. (8자 이상)");
+
+  if (newPassword === null) {
+    return;
+  }
+
+  const confirmPassword = prompt("새 비밀번호를 한 번 더 입력하세요.");
+
+  if (confirmPassword === null) {
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    alert("새 비밀번호가 서로 일치하지 않습니다.");
+    return;
+  }
+
+  try {
+    const data = await requestJson("/api/account/password", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        currentPassword,
+        newPassword
+      })
+    });
+
+    alert(data.message);
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function deleteAccount() {
+  const confirmed = confirm(
+    "정말 회원 탈퇴하시겠습니까?\n내 Todo 데이터도 함께 삭제되며 되돌릴 수 없습니다."
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  const password = prompt("회원 탈퇴를 위해 현재 비밀번호를 입력하세요.");
+
+  if (password === null) {
+    return;
+  }
+
+  try {
+    const data = await requestJson("/api/account", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        password
+      })
+    });
+
+    alert(data.message);
+    emailInput.value = "";
+    passwordInput.value = "";
     showLoggedOut();
   } catch (error) {
     alert(error.message);
@@ -241,6 +320,8 @@ async function addTodo() {
 loginButton.addEventListener("click", login);
 registerButton.addEventListener("click", register);
 logoutButton.addEventListener("click", logout);
+changePasswordButton.addEventListener("click", changePassword);
+deleteAccountButton.addEventListener("click", deleteAccount);
 addButton.addEventListener("click", addTodo);
 
 passwordInput.addEventListener("keydown", (event) => {
